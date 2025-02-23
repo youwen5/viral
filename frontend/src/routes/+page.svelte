@@ -22,6 +22,7 @@
 
   // toggleable options
   let toggleableExtrusions = $state({
+    human_simulation: false,
     infectedBirds: true,
     susceptibleBirds: false,
     resistantBirds: false,
@@ -34,6 +35,7 @@
 
   let geojson = $state();
   let rawData = $state();
+  let humangeojson = $state();
 
   // the amount of simulations our current loaded dataset has
   let max = $state(100);
@@ -55,7 +57,9 @@
   const generateNewData = async () => {
     generatingNewData = true;
     const seir = await new CompartmentalModels(0.2, 1 / 5, 1 / 10).SEIR(desiredSimulationCount);
+    const humanseir = await new CompartmentalModels(0.2, 1/5, 1/10).HumanSEIR(0.5, 1/3, 1/10, desiredSimulationCount);
     geojson = await mergeGeoJSONWithExternalData(seir);
+    humangeojson = await mergeGeoJSONWithExternalData(humanseir);
     rawData = seir;
     generatingNewData = false;
   };
@@ -96,8 +100,145 @@
     center={[-98.137, 40.137]}
     zoom={4}
   >
-    <GeoJSON id="cbsa" data={geojson as unknown as FeatureCollection} promoteId="CBSAFP">
-      {#if toggleableExtrusions.infectedBirds}
+  {#if !toggleableExtrusions.human_simulation}
+  <GeoJSON id="cbsa" data={geojson as unknown as FeatureCollection} promoteId="CBSAFP">
+    {#if toggleableExtrusions.infectedBirds}
+      <FillExtrusionLayer
+        paint={{
+          'fill-extrusion-base': 0,
+          'fill-extrusion-color': [
+            'interpolate',
+            ['linear'],
+            // Population density
+            //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
+            ['/', ['get', 'S', ['at', iter, ['get', 'simulatedData']]], 10000],
+            0,
+            '#0a0',
+            200,
+            '#a00'
+          ],
+          'fill-extrusion-opacity': 0.6,
+          'fill-extrusion-height': [
+            '*',
+            ['sqrt', ['get', 'I', ['at', iter, ['get', 'simulatedData']]]],
+            1000
+          ]
+        }}
+        beforeLayerType="symbol"
+      >
+        <Popup openOn="click" closeOnClickInside={true}>
+          {#snippet children({ data })}
+            {@const props = data?.properties}
+            {#if props && props.simulatedData}
+              {@const infection_data = JSON.parse(props.simulatedData)[iter]}
+              <div class={`flex flex-col gap-2`}>
+                <div class="text-lg font-bold">
+                  {props.coty_name.substring(2, props.coty_name.length - 2)}, {props.ste_name.substring(
+                    2,
+                    props.ste_name.length - 2
+                  )}
+                </div>
+                <p>
+                  Population: {Math.round(
+                    infection_data.S + infection_data.I + infection_data.E + infection_data.R
+                  )}
+                </p>
+                <p>Infected: {Math.round(infection_data.I)}</p>
+                <p>Susceptible: {Math.round(infection_data.S)}</p>
+                <p>Exposed: {Math.round(infection_data.E)}</p>
+                <p>Resistant: {Math.round(infection_data.R)}</p>
+                <Button
+                  onclick={() => {
+                    selectedCounty = {
+                      code: props.coty_gnis_code,
+                      state: props.ste_name.substring(2, props.ste_name.length - 2),
+                      name: props.coty_name.substring(2, props.coty_name.length - 2)
+                    };
+                    openPopupView();
+                  }}>Inspect</Button
+                >
+              </div>
+            {/if}
+          {/snippet}
+        </Popup>
+      </FillExtrusionLayer>
+    {/if}
+    {#if toggleableExtrusions.exposedBirds}
+      <FillExtrusionLayer
+        paint={{
+          'fill-extrusion-base': 0,
+          'fill-extrusion-color': [
+            'interpolate',
+            ['linear'],
+            // Population density
+            //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
+            ['/', ['get', 'E', ['at', iter, ['get', 'simulatedData']]], 10000],
+            0,
+            '#0a0',
+            200,
+            '#a00'
+          ],
+          'fill-extrusion-opacity': 0.6,
+          'fill-extrusion-height': [
+            '*',
+            ['sqrt', ['get', 'E', ['at', iter, ['get', 'simulatedData']]]],
+            1000
+          ]
+        }}
+        beforeLayerType="symbol"
+      ></FillExtrusionLayer>
+    {/if}
+    {#if toggleableExtrusions.susceptibleBirds}
+      <FillExtrusionLayer
+        paint={{
+          'fill-extrusion-base': 0,
+          'fill-extrusion-color': [
+            'interpolate',
+            ['linear'],
+            ['/', ['get', 'S', ['at', iter, ['get', 'simulatedData']]], 10000],
+            0,
+            '#0a0',
+            200,
+            '#a00'
+          ],
+          'fill-extrusion-opacity': 0.6,
+          'fill-extrusion-height': [
+            '*',
+            ['sqrt', ['get', 'S', ['at', iter, ['get', 'simulatedData']]]],
+            1000
+          ]
+        }}
+        beforeLayerType="symbol"
+      ></FillExtrusionLayer>
+    {/if}
+    {#if toggleableExtrusions.resistantBirds}
+      <FillExtrusionLayer
+        paint={{
+          'fill-extrusion-base': 0,
+          'fill-extrusion-color': [
+            'interpolate',
+            ['linear'],
+            ['/', ['get', 'R', ['at', iter, ['get', 'simulatedData']]], 10000],
+            0,
+            '#0a0',
+            200,
+            '#a00'
+          ],
+          'fill-extrusion-opacity': 0.6,
+          'fill-extrusion-height': [
+            '*',
+            ['sqrt', ['get', 'R', ['at', iter, ['get', 'simulatedData']]]],
+            1000
+          ]
+        }}
+        beforeLayerType="symbol"
+      ></FillExtrusionLayer>
+    {/if}
+  </GeoJSON>
+  {/if}
+  {#if toggleableExtrusions.human_simulation}
+    <GeoJSON id="cbsa" data={humangeojson as unknown as FeatureCollection} promoteId="CBSAFP">
+      {#if toggleableExtrusions.infectedHumans}
         <FillExtrusionLayer
           paint={{
             'fill-extrusion-base': 0,
@@ -158,7 +299,7 @@
           </Popup>
         </FillExtrusionLayer>
       {/if}
-      {#if toggleableExtrusions.exposedBirds}
+      {#if toggleableExtrusions.exposedHumans}
         <FillExtrusionLayer
           paint={{
             'fill-extrusion-base': 0,
@@ -183,7 +324,7 @@
           beforeLayerType="symbol"
         ></FillExtrusionLayer>
       {/if}
-      {#if toggleableExtrusions.susceptibleBirds}
+      {#if toggleableExtrusions.susceptibleHumans}
         <FillExtrusionLayer
           paint={{
             'fill-extrusion-base': 0,
@@ -206,7 +347,7 @@
           beforeLayerType="symbol"
         ></FillExtrusionLayer>
       {/if}
-      {#if toggleableExtrusions.resistantBirds}
+      {#if toggleableExtrusions.resistantHumans}
         <FillExtrusionLayer
           paint={{
             'fill-extrusion-base': 0,
@@ -230,6 +371,7 @@
         ></FillExtrusionLayer>
       {/if}
     </GeoJSON>
+    {/if}
   </MapLibre>
 {:else}
   <p>Loading</p>
@@ -356,7 +498,7 @@
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="terms" />
+          <Checkbox id="terms" bind:checked={toggleableExtrusions.human_simulation} />
           <Label for="terms">Model human transmission</Label>
         </div>
       </Card.Content>
@@ -393,6 +535,10 @@
         <div class="flex items-center space-x-2">
           <Checkbox id="susceptiblehuman" bind:checked={toggleableExtrusions.susceptibleHumans} />
           <Label for="susceptiblehuman">Show susceptible humans</Label>
+        </div>
+        <div class="flex items-center space-x-2">
+          <Checkbox id="exposedbird" bind:checked={toggleableExtrusions.exposedHumans} />
+          <Label for="exposedbird">Show exposed humans</Label>
         </div>
       </Card.Content>
     </Card.Root>
