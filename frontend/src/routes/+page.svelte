@@ -26,22 +26,22 @@
           ['linear'],
           // Population density
           //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
-          ['/', ['get', 'S', ['get', '70']], 10000],
+          ['/', ['get', 'S', ['at',0,['get', 'simulatedData']]], 10000],
           0,
           '#0a0',
           200,
           '#a00'
         ],
         'fill-extrusion-opacity': 0.6,
-        'fill-extrusion-height': ['/', ['get', 'I', ['get', '70']], 50]
+        'fill-extrusion-height': ['/', ['get', 'I', ['at',0, ['get', 'simulatedData']]], 50]
       }}
       beforeLayerType="symbol"
     >
       <Popup openOn="hover">
         {#snippet children({ data })}
           {@const props = data?.properties}
-          {#if props && props["70"]}
-            {@const infection_data = JSON.parse(props['70'])}
+          {#if props && props.simulatedData}
+            {@const infection_data = JSON.parse(props.simulatedData)[0]}
             <div class={`flex flex-col gap-2`}>
               <div class="text-lg font-bold">{props.coty_name.substring(2,props.coty_name.length - 2)}, {props.ste_name.substring(2,props.ste_name.length - 2)}</div>
               <p>Population: {Math.round(infection_data.S + infection_data.I + infection_data.E + infection_data.R)}</p>

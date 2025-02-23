@@ -182,7 +182,7 @@ function mergeGeoJSONWithExternalData(
     const simulatedData = countyData[gnis];
     countyFeature.properties = {
       ...countyFeature.properties,
-      ...simulatedData,
+      simulatedData,
     };
   }
   const jsonOutput = JSON.stringify(county_geojson, null, 2);
@@ -265,4 +265,3 @@ class CompartmentModels {
 const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10);
 const out = await myModel.SEIR();
 mergeGeoJSONWithExternalData(out, "out.geojson");
-
