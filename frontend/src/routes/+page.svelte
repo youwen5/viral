@@ -1,5 +1,5 @@
 <script lang="ts">
-  import cbsa from '$lib/data/cbsa.json';
+  import { Input } from '$lib/components/ui/input/index.js';
   import generatedData from '$lib/data/out_geo.json';
   import { Popup, GeoJSON, MapLibre, FillExtrusionLayer } from 'svelte-maplibre';
   import type { FeatureCollection } from 'geojson';
@@ -10,10 +10,39 @@
   import { Button } from '$lib/components/ui/button';
 
   let iter = $state(0);
+  let animationPlaying = $state(false);
+  let stepSize = $state(5);
+  let max = $state(100);
+  let desiredSimulationCount = $state(100);
+
+  let toggleableExtrusions = $state({
+    infectedBirds: true,
+    susceptibleBirds: false,
+    resistantBirds: false,
+    exposedBirds: false,
+    infectedHumans: true,
+    resistantHumans: false,
+    exposedHumans: false,
+    susceptibleHumans: false
+  });
 
   const increment_next = () => {
-    if (iter < 100) {
-      iter++;
+    if (iter >= max - 1) iter = 0;
+    if (!animationPlaying) {
+      animationPlaying = true;
+      if (iter < max) {
+        const interval = setInterval(() => {
+          if (iter >= max - 1 || !animationPlaying) {
+            clearInterval(interval);
+            animationPlaying = false;
+          }
+          iter = Math.ceil(iter + stepSize / 5);
+        }, 200);
+      } else {
+        animationPlaying = false;
+      }
+    } else {
+      animationPlaying = false;
     }
   };
 </script>
@@ -27,55 +56,128 @@
   zoom={4}
 >
   <GeoJSON id="cbsa" data={generatedData as unknown as FeatureCollection} promoteId="CBSAFP">
-    <FillExtrusionLayer
-      paint={{
-        'fill-extrusion-base': 0,
-        'fill-extrusion-color': [
-          'interpolate',
-          ['linear'],
-          // Population density
-          //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
-          ['/', ['get', 'S', ['at', iter, ['get', 'simulatedData']]], 10000],
-          0,
-          '#0a0',
-          200,
-          '#a00'
-        ],
-        'fill-extrusion-opacity': 0.6,
-        'fill-extrusion-height': [
-          '*',
-          ['sqrt', ['get', 'I', ['at', iter, ['get', 'simulatedData']]]],
-          1000
-        ]
-      }}
-      beforeLayerType="symbol"
-    >
-      <Popup openOn="hover">
-        {#snippet children({ data })}
-          {@const props = data?.properties}
-          {#if props && props.simulatedData}
-            {@const infection_data = JSON.parse(props.simulatedData)[iter]}
-            <div class={`flex flex-col gap-2`}>
-              <div class="text-lg font-bold">
-                {props.coty_name.substring(2, props.coty_name.length - 2)}, {props.ste_name.substring(
-                  2,
-                  props.ste_name.length - 2
-                )}
+    {#if toggleableExtrusions.infectedBirds}
+      <FillExtrusionLayer
+        paint={{
+          'fill-extrusion-base': 0,
+          'fill-extrusion-color': [
+            'interpolate',
+            ['linear'],
+            // Population density
+            //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
+            ['/', ['get', 'S', ['at', iter, ['get', 'simulatedData']]], 10000],
+            0,
+            '#0a0',
+            200,
+            '#a00'
+          ],
+          'fill-extrusion-opacity': 0.6,
+          'fill-extrusion-height': [
+            '*',
+            ['sqrt', ['get', 'I', ['at', iter, ['get', 'simulatedData']]]],
+            1000
+          ]
+        }}
+        beforeLayerType="symbol"
+      >
+        <Popup openOn="hover">
+          {#snippet children({ data })}
+            {@const props = data?.properties}
+            {#if props && props.simulatedData}
+              {@const infection_data = JSON.parse(props.simulatedData)[iter]}
+              <div class={`flex flex-col gap-2`}>
+                <div class="text-lg font-bold">
+                  {props.coty_name.substring(2, props.coty_name.length - 2)}, {props.ste_name.substring(
+                    2,
+                    props.ste_name.length - 2
+                  )}
+                </div>
+                <p>
+                  Population: {Math.round(
+                    infection_data.S + infection_data.I + infection_data.E + infection_data.R
+                  )}
+                </p>
+                <p>Infected: {Math.round(infection_data.I)}</p>
+                <p>Susceptible: {Math.round(infection_data.S)}</p>
+                <p>Exposed: {Math.round(infection_data.E)}</p>
+                <p>Resistant: {Math.round(infection_data.R)}</p>
               </div>
-              <p>
-                Population: {Math.round(
-                  infection_data.S + infection_data.I + infection_data.E + infection_data.R
-                )}
-              </p>
-              <p>Infected: {Math.round(infection_data.I)}</p>
-              <p>Susceptible: {Math.round(infection_data.S)}</p>
-              <p>Exposed: {Math.round(infection_data.E)}</p>
-              <p>Resistant: {Math.round(infection_data.R)}</p>
-            </div>
-          {/if}
-        {/snippet}
-      </Popup>
-    </FillExtrusionLayer>
+            {/if}
+          {/snippet}
+        </Popup>
+      </FillExtrusionLayer>
+    {/if}
+    {#if toggleableExtrusions.exposedBirds}
+      <FillExtrusionLayer
+        paint={{
+          'fill-extrusion-base': 0,
+          'fill-extrusion-color': [
+            'interpolate',
+            ['linear'],
+            // Population density
+            //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
+            ['/', ['get', 'E', ['at', iter, ['get', 'simulatedData']]], 10000],
+            0,
+            '#0a0',
+            200,
+            '#a00'
+          ],
+          'fill-extrusion-opacity': 0.6,
+          'fill-extrusion-height': [
+            '*',
+            ['sqrt', ['get', 'E', ['at', iter, ['get', 'simulatedData']]]],
+            1000
+          ]
+        }}
+        beforeLayerType="symbol"
+      ></FillExtrusionLayer>
+    {/if}
+    {#if toggleableExtrusions.susceptibleBirds}
+      <FillExtrusionLayer
+        paint={{
+          'fill-extrusion-base': 0,
+          'fill-extrusion-color': [
+            'interpolate',
+            ['linear'],
+            ['/', ['get', 'S', ['at', iter, ['get', 'simulatedData']]], 10000],
+            0,
+            '#0a0',
+            200,
+            '#a00'
+          ],
+          'fill-extrusion-opacity': 0.6,
+          'fill-extrusion-height': [
+            '*',
+            ['sqrt', ['get', 'S', ['at', iter, ['get', 'simulatedData']]]],
+            1000
+          ]
+        }}
+        beforeLayerType="symbol"
+      ></FillExtrusionLayer>
+    {/if}
+    {#if toggleableExtrusions.resistantBirds}
+      <FillExtrusionLayer
+        paint={{
+          'fill-extrusion-base': 0,
+          'fill-extrusion-color': [
+            'interpolate',
+            ['linear'],
+            ['/', ['get', 'R', ['at', iter, ['get', 'simulatedData']]], 10000],
+            0,
+            '#0a0',
+            200,
+            '#a00'
+          ],
+          'fill-extrusion-opacity': 0.6,
+          'fill-extrusion-height': [
+            '*',
+            ['sqrt', ['get', 'R', ['at', iter, ['get', 'simulatedData']]]],
+            1000
+          ]
+        }}
+        beforeLayerType="symbol"
+      ></FillExtrusionLayer>
+    {/if}
   </GeoJSON>
 </MapLibre>
 
@@ -85,7 +187,8 @@
   <h1 class="text-3xl font-bold">Viral</h1>
   <p class="mt-4">
     An epidemic modeler to track and predict the <a
-      href="https://www.cdc.gov/bird-flu/situation-summary/index.html">H5N1 Avian Influenza</a
+      href="https://www.cdc.gov/bird-flu/situation-summary/index.html"
+      class="link">H5N1 Avian Influenza</a
     > outbreak using compartmental models and generative agents.
   </p>
   <p class="mt-4">
@@ -111,10 +214,36 @@
   <div class="mt-4 space-y-2">
     <Card.Root>
       <Card.Header>
-        <Card.Title>Simulation options</Card.Title>
+        <Card.Title>Simulation controls</Card.Title>
       </Card.Header>
-      <Card.Content class="space-y-2">
-        <Button onclick={increment_next}>Next</Button>
+      <Card.Content class="space-y-4">
+        <div class="space-y-2">
+          <p class="font-medium">Days passed: {iter}</p>
+          <Slider type="single" bind:value={iter} max={100} step={1} class="ml-2 max-w-[70%]" />
+        </div>
+        <Button onclick={increment_next} variant={!animationPlaying ? 'default' : 'secondary'}
+          >{iter >= max - 1 ? 'Replay' : !animationPlaying ? 'Play' : 'Pause'}</Button
+        >
+        <div class="flex items-center gap-2">
+          <p>
+            Simulation speed (days per second):
+            <Input type="number" bind:value={stepSize} placeholder="1" class="mt-2 max-w-[4rem]" />
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <div>
+            Days to simulate:
+            <Input
+              type="number"
+              bind:value={desiredSimulationCount}
+              placeholder="100"
+              class="mt-2 max-w-[5rem]"
+            />
+            <p class={`my-2 text-red-500 ${desiredSimulationCount <= 1000 ? 'hidden' : ''}`}>
+              WARNING: setting a simulation count too large may lead to a critical program crash.
+            </p>
+          </div>
+        </div>
         <div class="flex items-center space-x-2">
           <Checkbox id="terms" />
           <Label for="terms">Model human transmission</Label>
@@ -123,32 +252,36 @@
     </Card.Root>
     <Card.Root>
       <Card.Header>
-        <Card.Title>View options</Card.Title>
+        <Card.Title>View filters</Card.Title>
       </Card.Header>
       <Card.Content class="space-y-2">
         <div class="flex items-center space-x-2">
-          <Checkbox id="terms" />
-          <Label for="terms">Show infected birds</Label>
+          <Checkbox id="infectedbirds" bind:checked={toggleableExtrusions.infectedBirds} />
+          <Label for="infectedbirds">Show infected birds</Label>
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="terms" />
-          <Label for="terms">Show resistant birds</Label>
+          <Checkbox id="resistantbirds" bind:checked={toggleableExtrusions.resistantBirds} />
+          <Label for="resistantbirds">Show resistant birds</Label>
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="terms" />
-          <Label for="terms">Show susceptible birds</Label>
+          <Checkbox id="susceptiblebird" bind:checked={toggleableExtrusions.susceptibleBirds} />
+          <Label for="susceptiblebird">Show susceptible birds</Label>
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="terms" />
-          <Label for="terms">Show infected humans</Label>
+          <Checkbox id="exposedbird" bind:checked={toggleableExtrusions.exposedBirds} />
+          <Label for="exposedbird">Show exposed birds</Label>
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="terms" />
-          <Label for="terms">Show resistant humans</Label>
+          <Checkbox id="infectedhuman" bind:checked={toggleableExtrusions.infectedHumans} />
+          <Label for="infectedhuman">Show infected humans</Label>
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="terms" />
-          <Label for="terms">Show susceptible humans</Label>
+          <Checkbox id="resistanthuman" bind:checked={toggleableExtrusions.resistantHumans} />
+          <Label for="resistanthuman">Show resistant humans</Label>
+        </div>
+        <div class="flex items-center space-x-2">
+          <Checkbox id="susceptiblehuman" bind:checked={toggleableExtrusions.susceptibleHumans} />
+          <Label for="susceptiblehuman">Show susceptible humans</Label>
         </div>
       </Card.Content>
     </Card.Root>
