@@ -259,14 +259,5 @@ export class CompartmentalModels {
       throw new Error('We broke something.');
     }
   };
+
 }
-
-// const jsonOutput = JSON.stringify(allCountyData, null, 2);
-// fs.writeFileSync(path.join(__dirname, "seir_results.json"), jsonOutput);
-// console.log("Results written to seir_results.csv");
-
-//const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10);
-//const out = await myModel.SEIR();
-//mergeGeoJSONWithExternalData(out, 'out.geojson');
-//const jsonOutput = JSON.stringify(out, null, 2);
-//fs.writeFileSync(path.join(__dirname, 'raw_data.json'), jsonOutput);
