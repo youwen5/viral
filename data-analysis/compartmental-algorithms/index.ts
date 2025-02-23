@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import csv from "csv-parser";
 import stateCodes from "us-state-codes";
+import { publicDecrypt } from "crypto";
 
 interface SEIRDataPoint {
   time: number;
@@ -155,7 +156,7 @@ function runSEIRModel(
     // Update the compartments using Euler's method (simple and good for demonstration)
     S += dS * timeStepSize;
     E += dE * timeStepSize;
-    I += dI * timeStepSize;
+    I += dI * timeStepSize;    ;
     R += dR * timeStepSize;
 
     // Add the current state to the results.
@@ -189,6 +190,24 @@ function mergeGeoJSONWithExternalData(
   fs.writeFileSync(path.join(__dirname, out_filename), jsonOutput);
 }
 
+function getHumanPop(count_name: string ): number{
+    const csvFilePath = path.join(__dirname, "human_pop.csv");
+    fs.createReadStream(csvFilePath)
+    .pipe(csv())
+    .on("data", (row: any) => {
+      // Assuming your CSV has a column named 'InitialInfected' or similar.
+      // Adjust the column name as needed.  Also handle potential errors.
+        if(row["Geographic Area"] === count_name)
+        {
+            return row["2023"];
+        }
+    })
+    .on("error", (error: Error) => {
+        throw new Error("Human Population Error")
+    });
+    return 100000;
+}
+
 class CompartmentModels {
   private beta: number;
   private sigma: number;
@@ -203,7 +222,7 @@ class CompartmentModels {
   public SEIR = async (): Promise<CountyData> => {
     const csvFilePath = path.join(__dirname, "commercial-backyard-flocks.csv"); // Path to your CSV
     const timeSteps = 100; // Number of time steps to simulate
-    const timeStepSize = 1; // Size of each time step (e.g., 1 day)
+    const timeStepSize = 0.5; // Size of each time step (e.g., 1 day)
 
     try {
       const countyData: CountyInfectionData[] =
@@ -256,13 +275,75 @@ class CompartmentModels {
       throw new Error("We broke something.");
     }
   };
+
+  public HumanSEIR = async (t_beta: number, t_sigma: number, t_gamma: number): Promise<CountyData> => {
+    const timeSteps = 100; // Number of time steps to simulate
+    const timeStepSize = 0.5; // Size of each time step (e.g., 1 day)
+
+    try {
+        const geojsonDataRaw = fs.readFileSync("georef_county.geojson", "utf8");
+        let county_geojson;
+        try {
+            county_geojson = JSON.parse(geojsonDataRaw);
+          } catch (error) {
+            console.log("error parsing " + error);
+          }
+        const allCountyData: CountyData = {};
+        //Run Simulation for Each County
+        for (let countyFeature of county_geojson.features) {
+            const params: SEIRParameters = {
+                beta: t_beta,
+                sigma: t_sigma,
+                gamma: t_gamma,
+                population: getHumanPop(String(countyFeature.coty_name_long + ", " + countyFeature.ste_name)),
+            };
+        
+            const initialConditions = {
+            S0: Math.floor(Math.random() * params.population * 0.5),
+            E0: 0, // Start with no exposed individuals (you could also read this from CSV)
+            I0: Math.random() < 0.5 ? Math.floor(Math.random() * params.population * 0.05) : 0,
+            R0: 0,
+            };
+            //Do Simulation for County
+            const simulationResults = runSEIRModel(
+                params,
+                initialConditions,
+                timeSteps,
+                timeStepSize,
+            );
+            // Write results to a json file
+            const gnis = countyFeature.properties.coty_gnis_code;
+            try {
+            allCountyData[gnis] = simulationResults;
+            } catch (error) {
+            console.log(
+                `Couldn't find a county code for ${gnis} code for county`,
+            );
+            }
+        }
+        //Turns the Simulation reasults in JSON
+        return allCountyData;
+
+        // Output the results (e.g., print to console, write to a new CSV, plot with a library)
+        } catch (error) {
+        // @ts-expect-error
+        console.error("Error:", error.message);
+        throw new Error("We broke something.");
+        }
+    };
 }
 
-// const jsonOutput = JSON.stringify(allCountyData, null, 2);
-// fs.writeFileSync(path.join(__dirname, "seir_results.json"), jsonOutput);
-// console.log("Results written to seir_results.csv");
+interface double_models{
+    bird_SEIR : CountyData;
+    human_SEIR : CountyData;
+}
 
-const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10);
-const out = await myModel.SEIR();
-mergeGeoJSONWithExternalData(out, "out.geojson");
+async function simulate_both() :  Promise<double_models> {
+    const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10);
+    const bird =  await myModel.SEIR();
+    const human = await myModel.HumanSEIR(10, 1/3, 1/10);
+
+    return {bird_SEIR: bird, human_SEIR: human};
+}
+
 
