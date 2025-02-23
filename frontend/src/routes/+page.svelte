@@ -7,15 +7,15 @@
   import { Checkbox } from '$lib/components/ui/checkbox';
   import { Label } from '$lib/components/ui/label';
   import { Slider } from '$lib/components/ui/slider';
-    import {Button} from '$lib/components/ui/button';
+  import { Button } from '$lib/components/ui/button';
 
-  let iter = $state(0)
+  let iter = $state(0);
 
   const increment_next = () => {
-  if (iter < 100) {
-  iter++;
-  }
-  }
+    if (iter < 100) {
+      iter++;
+    }
+  };
 </script>
 
 <MapLibre
@@ -35,14 +35,18 @@
           ['linear'],
           // Population density
           //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
-          ['/', ['get', 'S', ['at',iter,['get', 'simulatedData']]], 10000],
+          ['/', ['get', 'S', ['at', iter, ['get', 'simulatedData']]], 10000],
           0,
           '#0a0',
           200,
           '#a00'
         ],
         'fill-extrusion-opacity': 0.6,
-        'fill-extrusion-height': ['*', ['sqrt', ['get', 'I', ['at',iter, ['get', 'simulatedData']]]], 1000]
+        'fill-extrusion-height': [
+          '*',
+          ['sqrt', ['get', 'I', ['at', iter, ['get', 'simulatedData']]]],
+          1000
+        ]
       }}
       beforeLayerType="symbol"
     >
@@ -52,8 +56,17 @@
           {#if props && props.simulatedData}
             {@const infection_data = JSON.parse(props.simulatedData)[iter]}
             <div class={`flex flex-col gap-2`}>
-              <div class="text-lg font-bold">{props.coty_name.substring(2,props.coty_name.length - 2)}, {props.ste_name.substring(2,props.ste_name.length - 2)}</div>
-              <p>Population: {Math.round(infection_data.S + infection_data.I + infection_data.E + infection_data.R)}</p>
+              <div class="text-lg font-bold">
+                {props.coty_name.substring(2, props.coty_name.length - 2)}, {props.ste_name.substring(
+                  2,
+                  props.ste_name.length - 2
+                )}
+              </div>
+              <p>
+                Population: {Math.round(
+                  infection_data.S + infection_data.I + infection_data.E + infection_data.R
+                )}
+              </p>
               <p>Infected: {Math.round(infection_data.I)}</p>
               <p>Susceptible: {Math.round(infection_data.S)}</p>
               <p>Exposed: {Math.round(infection_data.E)}</p>
@@ -71,14 +84,29 @@
 >
   <h1 class="text-3xl font-bold">Viral</h1>
   <p class="mt-4">
-    A compartmental epidemic modeler to track and predict the H5N1 Avian Flu outbreak using SEIR
-    models.
+    An epidemic modeler to track and predict the <a
+      href="https://www.cdc.gov/bird-flu/situation-summary/index.html">H5N1 Avian Influenza</a
+    > outbreak using compartmental models and generative agents.
   </p>
   <p class="mt-4">
-    Supports SEIR, SIR, and various other compartmental models. Source available on <a
+    For our primary projections, we use the SEIR <a
       class="link"
-      href="https://github.com/youwen5/viral">GitHub</a
-    >.
+      href="https://en.wikipedia.org/wiki/Compartmental_models_in_epidemiology"
+      >compartmental model</a
+    >, a suitable mathematical model of infectious disease spread which groups populations into
+    compartments of "susceptible," "exposed," "infected," or "recovered."
+  </p>
+  <p class="mt-4">
+    We also conduct simulations at the local level using a novel agent-based technique as described
+    in the paper <em>Epidemic Modeling with Generative Agents</em> (<a
+      class="link"
+      href="https://arxiv.org/abs/2307.04986">arXiv:2307.04986</a
+    >).
+  </p>
+  <p class="mt-4">
+    Free and open source available on <a class="link" href="https://github.com/youwen5/viral"
+      >GitHub</a
+    > under the BSD license.
   </p>
   <div class="mt-4 space-y-2">
     <Card.Root>
@@ -86,7 +114,7 @@
         <Card.Title>Simulation options</Card.Title>
       </Card.Header>
       <Card.Content class="space-y-2">
-      <Button onclick={increment_next}>Next</Button>
+        <Button onclick={increment_next}>Next</Button>
         <div class="flex items-center space-x-2">
           <Checkbox id="terms" />
           <Label for="terms">Model human transmission</Label>
