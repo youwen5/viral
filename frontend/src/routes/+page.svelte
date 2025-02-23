@@ -2,6 +2,8 @@
   import { Input } from '$lib/components/ui/input/index.js';
   import generatedData from '$lib/data/out_geo.json';
   import rawData from '$lib/data/raw_data.json';
+  import { CompartmentalModels, mergeGeoJSONWithExternalData } from '$lib/data-analysis/index.ts';
+  import {onMount} from 'svelte'
   import { Popup, GeoJSON, MapLibre, FillExtrusionLayer } from 'svelte-maplibre';
   import type { FeatureCollection } from 'geojson';
   import * as Card from '$lib/components/ui/card';
@@ -12,6 +14,12 @@
   import { fly } from 'svelte/transition';
   import { ArrowDown } from 'lucide-svelte';
   import { PieChart, Text } from 'layerchart';
+
+  onMount(async () => {
+    const model = new CompartmentalModels(0.2, 1 / 5, 1 / 10);
+    //console.log(await model.SEIR())
+    geojson = await mergeGeoJSONWithExternalData(await model.SEIR())
+  })
 
   // toggleable options
   let toggleableExtrusions = $state({
@@ -24,6 +32,8 @@
     exposedHumans: false,
     susceptibleHumans: false
   });
+
+  let geojson = $state()
 
   // the amount of simulations our current loaded dataset has
   let max = $state(100);
@@ -67,6 +77,7 @@
   };
 </script>
 
+{#if geojson}
 <MapLibre
   style="https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
   class="h-[100vh]"
@@ -75,7 +86,7 @@
   center={[-98.137, 40.137]}
   zoom={4}
 >
-  <GeoJSON id="cbsa" data={generatedData as unknown as FeatureCollection} promoteId="CBSAFP">
+  <GeoJSON id="cbsa" data={geojson as unknown as FeatureCollection} promoteId="CBSAFP">
     {#if toggleableExtrusions.infectedBirds}
       <FillExtrusionLayer
         paint={{
@@ -210,6 +221,7 @@
     {/if}
   </GeoJSON>
 </MapLibre>
+{/if}
 
 {#if dialogOpen}
   {@const data = rawData[selectedCounty.code][iter]}
@@ -225,7 +237,7 @@
     transition:fly={{ y: 200 }}
   >
     <Button
-      class="absolute right-2 top-2"
+      class="fixed right-2 top-2"
       size="icon"
       variant="outline"
       onclick={() => (dialogOpen = false)}><ArrowDown /></Button
