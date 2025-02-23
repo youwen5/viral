@@ -11,7 +11,7 @@
   import { Button } from '$lib/components/ui/button';
   import { fly } from 'svelte/transition';
   import { ArrowDown } from 'lucide-svelte';
-  import { PieChart, Text } from 'layerchart';
+  import { PieChart } from 'layerchart';
 
   onMount(async () => {
     const model = new CompartmentalModels(0.2, 1 / 5, 1 / 10);
