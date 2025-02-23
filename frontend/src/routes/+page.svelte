@@ -26,24 +26,29 @@
           ['linear'],
           // Population density
           //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
-          ['/', ['get', 'S', ['get', '88']], 10000],
+          ['/', ['get', 'S', ['get', '70']], 10000],
           0,
           '#0a0',
           200,
           '#a00'
         ],
         'fill-extrusion-opacity': 0.6,
-        'fill-extrusion-height': ['/', ['get', 'S', ['get', '88']], 20]
+        'fill-extrusion-height': ['/', ['get', 'I', ['get', '70']], 50]
       }}
       beforeLayerType="symbol"
     >
       <Popup openOn="hover">
         {#snippet children({ data })}
           {@const props = data?.properties}
-          {#if props && props["0"]}
+          {#if props && props["70"]}
+            {@const infection_data = JSON.parse(props['70'])}
             <div class={`flex flex-col gap-2`}>
               <div class="text-lg font-bold">{props.coty_name.substring(2,props.coty_name.length - 2)}, {props.ste_name.substring(2,props.ste_name.length - 2)}</div>
-              <p>Population: {props['0']['I']}</p>
+              <p>Population: {Math.round(infection_data.S + infection_data.I + infection_data.E + infection_data.R)}</p>
+              <p>Infected: {Math.round(infection_data.I)}</p>
+              <p>Susceptible: {Math.round(infection_data.S)}</p>
+              <p>Exposed: {Math.round(infection_data.E)}</p>
+              <p>Resistant: {Math.round(infection_data.R)}</p>
             </div>
           {/if}
         {/snippet}
