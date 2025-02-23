@@ -9,12 +9,7 @@
   import { Slider } from '$lib/components/ui/slider';
   import { Button } from '$lib/components/ui/button';
 
-  let iter = $state(0);
-  let animationPlaying = $state(false);
-  let stepSize = $state(5);
-  let max = $state(100);
-  let desiredSimulationCount = $state(100);
-
+  // toggleable options
   let toggleableExtrusions = $state({
     infectedBirds: true,
     susceptibleBirds: false,
@@ -26,6 +21,18 @@
     susceptibleHumans: false
   });
 
+  // the amount of simulations our current loaded dataset has
+  let max = $state(100);
+
+  // the amount of simulations the user WANTS to run
+  let desiredSimulationCount = $state(100);
+
+  // right now this is the same as day, but subject to change
+  let iter = $state(0);
+  let animationPlaying = $state(false);
+  // step size of the autoplayer
+  let stepSize = $state(5);
+  // the autoplay feature
   const increment_next = () => {
     if (iter >= max - 1) iter = 0;
     if (!animationPlaying) {
@@ -184,7 +191,7 @@
 <div
   class="fixed bottom-2 right-2 top-2 w-96 overflow-y-auto rounded-lg bg-background bg-opacity-60 p-4 shadow-lg backdrop-blur-lg"
 >
-  <h1 class="text-3xl font-bold">Viral</h1>
+  <h1 class="text-3xl font-bold">Virion</h1>
   <p class="mt-4">
     An epidemic modeler to track and predict the <a
       href="https://www.cdc.gov/bird-flu/situation-summary/index.html"
