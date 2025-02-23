@@ -165,24 +165,29 @@ function runSEIRModel(
   return results;
 }
 
-function mergeGeoJSONWithExternalData(countyData: CountyData, out_filename: string): void {
-    // Create a lookup map from externalData keyed by the shared "code" property.
-    const geojsonDataRaw = fs.readFileSync("georef_county.geojson", "utf8");
-    let county_geojson;
-    try {
-        county_geojson = JSON.parse(geojsonDataRaw);
-    } catch(error) {
-        console.log("error parsing " + error)
-    }
-    for (let countyFeature of county_geojson.features) {
-        const gnis = countyFeature.properties.coty_gnis_code;
-        const simulatedData = countyData[gnis];
-        countyFeature.properties = {...countyFeature.properties, ...simulatedData};
-    }
-    const jsonOutput = JSON.stringify(county_geojson, null, 2);
-    fs.writeFileSync(path.join(__dirname, out_filename), jsonOutput);
+function mergeGeoJSONWithExternalData(
+  countyData: CountyData,
+  out_filename: string,
+): void {
+  // Create a lookup map from externalData keyed by the shared "code" property.
+  const geojsonDataRaw = fs.readFileSync("georef_county.geojson", "utf8");
+  let county_geojson;
+  try {
+    county_geojson = JSON.parse(geojsonDataRaw);
+  } catch (error) {
+    console.log("error parsing " + error);
+  }
+  for (let countyFeature of county_geojson.features) {
+    const gnis = countyFeature.properties.coty_gnis_code;
+    const simulatedData = countyData[gnis];
+    countyFeature.properties = {
+      ...countyFeature.properties,
+      ...simulatedData,
+    };
+  }
+  const jsonOutput = JSON.stringify(county_geojson, null, 2);
+  fs.writeFileSync(path.join(__dirname, out_filename), jsonOutput);
 }
-
 
 class CompartmentModels {
   private beta: number;
@@ -249,7 +254,7 @@ class CompartmentModels {
     } catch (error) {
       // @ts-expect-error
       console.error("Error:", error.message);
-      throw new Error("We broke something.")
+      throw new Error("We broke something.");
     }
   };
 }
@@ -258,7 +263,7 @@ class CompartmentModels {
 // fs.writeFileSync(path.join(__dirname, "seir_results.json"), jsonOutput);
 // console.log("Results written to seir_results.csv");
 
-
 const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10, 1000000);
 const out = await myModel.SEIR();
-mergeGeoJSONWithExternalData(out, "out.geojson")
+mergeGeoJSONWithExternalData(out, "out.geojson");
+

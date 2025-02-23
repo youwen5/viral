@@ -1,5 +1,6 @@
 <script lang="ts">
   import cbsa from '$lib/data/cbsa.json';
+  import simulatedData from '$lib/data/out_geo.json';
   import { Popup, GeoJSON, MapLibre, FillExtrusionLayer } from 'svelte-maplibre';
   import type { FeatureCollection } from 'geojson';
   import * as Card from '$lib/components/ui/card';
@@ -16,7 +17,7 @@
   center={[-98.137, 40.137]}
   zoom={4}
 >
-  <GeoJSON id="cbsa" data={cbsa as unknown as FeatureCollection} promoteId="CBSAFP">
+  <GeoJSON id="cbsa" data={simulatedData as unknown as FeatureCollection} promoteId="CBSAFP">
     <FillExtrusionLayer
       paint={{
         'fill-extrusion-base': 0,
@@ -24,24 +25,25 @@
           'interpolate',
           ['linear'],
           // Population density
-          ['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
+          //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
+          ['/', ['get', 'S', ['get', '88']], 10000],
           0,
           '#0a0',
           200,
           '#a00'
         ],
         'fill-extrusion-opacity': 0.6,
-        'fill-extrusion-height': ['/', ['get', 'POPESTIMATE2020'], 20]
+        'fill-extrusion-height': ['/', ['get', 'S', ['get', '88']], 20]
       }}
       beforeLayerType="symbol"
     >
       <Popup openOn="hover">
         {#snippet children({ data })}
           {@const props = data?.properties}
-          {#if props}
-            <div class="flex flex-col gap-2">
-              <div class="text-lg font-bold">{props.NAME}</div>
-              <p>Population: {props.POPESTIMATE2020}</p>
+          {#if props && props["0"]}
+            <div class={`flex flex-col gap-2`}>
+              <div class="text-lg font-bold">{props.coty_name.substring(2,props.coty_name.length - 2)}, {props.ste_name.substring(2,props.ste_name.length - 2)}</div>
+              <p>Population: {props['0']['I']}</p>
             </div>
           {/if}
         {/snippet}
@@ -58,8 +60,11 @@
     A compartmental epidemic modeler to track and predict the H5N1 Avian Flu outbreak using SEIR
     models.
   </p>
-  <p class='mt-4'>
-    Supports SEIR, SIR, and various other compartmental models. Source available on <a class='link' href="https://github.com/youwen5/viral">GitHub</a>.
+  <p class="mt-4">
+    Supports SEIR, SIR, and various other compartmental models. Source available on <a
+      class="link"
+      href="https://github.com/youwen5/viral">GitHub</a
+    >.
   </p>
   <div class="mt-4 space-y-2">
     <Card.Root>
