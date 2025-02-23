@@ -1,8 +1,6 @@
 <script lang="ts">
   import { Input } from '$lib/components/ui/input/index.js';
-  import generatedData from '$lib/data/out_geo.json';
-  import rawData from '$lib/data/raw_data.json';
-  import { CompartmentalModels, mergeGeoJSONWithExternalData } from '$lib/data-analysis/index.ts';
+  import { CompartmentalModels, mergeGeoJSONWithExternalData } from '$lib/data-analysis/compartmental-models.ts';
   import {onMount} from 'svelte'
   import { Popup, GeoJSON, MapLibre, FillExtrusionLayer } from 'svelte-maplibre';
   import type { FeatureCollection } from 'geojson';
