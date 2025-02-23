@@ -1,2 +1,5 @@
 .direnv/
 result
+out.geojson
+out_geo.json
+seir_results.json
