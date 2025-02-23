@@ -165,6 +165,25 @@ function runSEIRModel(
   return results;
 }
 
+function mergeGeoJSONWithExternalData(countyData: CountyData, out_filename: string): void {
+    // Create a lookup map from externalData keyed by the shared "code" property.
+    const geojsonDataRaw = fs.readFileSync("georef_county.geojson", "utf8");
+    let county_geojson;
+    try {
+        county_geojson = JSON.parse(geojsonDataRaw);
+    } catch(error) {
+        console.log("error parsing " + error)
+    }
+    for (let countyFeature of county_geojson.features) {
+        const gnis = countyFeature.properties.coty_gnis_code;
+        const simulatedData = countyData[gnis];
+        countyFeature.properties = {...countyFeature.properties, ...simulatedData};
+    }
+    const jsonOutput = JSON.stringify(county_geojson, null, 2);
+    fs.writeFileSync(path.join(__dirname, out_filename), jsonOutput);
+}
+
+
 class CompartmentModels {
   private beta: number;
   private sigma: number;
@@ -178,7 +197,7 @@ class CompartmentModels {
     this.population = pop;
   }
 
-  public SEIR = async () => {
+  public SEIR = async (): Promise<CountyData> => {
     const csvFilePath = path.join(__dirname, "commercial-backyard-flocks.csv"); // Path to your CSV
     const params: SEIRParameters = {
       beta: this.beta,
@@ -224,17 +243,22 @@ class CompartmentModels {
         }
       }
       //Turns the Simulation reasults in JSON
-      const jsonOutput = JSON.stringify(allCountyData, null, 2);
-      fs.writeFileSync(path.join(__dirname, "seir_results.json"), jsonOutput);
-      console.log("Results written to seir_results.csv");
+      return allCountyData;
 
       // Output the results (e.g., print to console, write to a new CSV, plot with a library)
     } catch (error) {
       // @ts-expect-error
       console.error("Error:", error.message);
+      throw new Error("We broke something.")
     }
   };
 }
 
+// const jsonOutput = JSON.stringify(allCountyData, null, 2);
+// fs.writeFileSync(path.join(__dirname, "seir_results.json"), jsonOutput);
+// console.log("Results written to seir_results.csv");
+
+
 const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10, 1000000);
-myModel.SEIR();
+const out = await myModel.SEIR();
+mergeGeoJSONWithExternalData(out, "out.geojson")
