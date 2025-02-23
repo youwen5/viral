@@ -32,6 +32,10 @@
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+    --color-success: 142.0859 70.5628% 45.2941%;
+  --color-warning: 37.6923 92.126% 50.1961%;
+  --color-info: 217.2193 91.2195% 59.8039%;
+  --color-danger: 0 84.2365% 60.1961%;
   }
 
   .dark {

@@ -147,10 +147,10 @@ function runSEIRModel(
 
   for (let t = 1; t <= timeSteps; t++) {
     // Calculate the *changes* in each compartment using the SEIR equations.
-    const dS = (-beta * I) * S / population;
-    const dE = (beta * I ) * S / population - sigma * (E );
-    const dI = sigma * (E ) - gamma * (I );
-    const dR = gamma * (I );
+    const dS = (-beta * I * S) / population;
+    const dE = (beta * I * S) / population - sigma * E;
+    const dI = sigma * E - gamma * I;
+    const dR = gamma * I;
 
     // Update the compartments using Euler's method (simple and good for demonstration)
     S += dS * timeStepSize;
@@ -212,14 +212,14 @@ class CompartmentModels {
       //Run Simulation for Each County
       for (let i = 0; i < countyData.length; i++) {
         const params: SEIRParameters = {
-            beta: this.beta,
-            sigma: this.sigma,
-            gamma: this.gamma,
-            population: countyData[i].infected,
-          };
-      
+          beta: this.beta,
+          sigma: this.sigma,
+          gamma: this.gamma,
+          population: countyData[i].infected,
+        };
+
         const initialConditions = {
-          S0: params.population - (countyData[i].infected * 0.1),
+          S0: params.population - countyData[i].infected * 0.1,
           E0: 0, // Start with no exposed individuals (you could also read this from CSV)
           I0: countyData[i].infected * 0.1,
           R0: 0,
@@ -265,3 +265,5 @@ class CompartmentModels {
 const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10);
 const out = await myModel.SEIR();
 mergeGeoJSONWithExternalData(out, "out.geojson");
+const jsonOutput = JSON.stringify(out, null, 2);
+fs.writeFileSync(path.join(__dirname, "raw_data.json"), jsonOutput);

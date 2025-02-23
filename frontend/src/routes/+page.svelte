@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Input } from '$lib/components/ui/input/index.js';
   import generatedData from '$lib/data/out_geo.json';
+  import rawData from '$lib/data/raw_data.json';
   import { Popup, GeoJSON, MapLibre, FillExtrusionLayer } from 'svelte-maplibre';
   import type { FeatureCollection } from 'geojson';
   import * as Card from '$lib/components/ui/card';
@@ -10,6 +11,7 @@
   import { Button } from '$lib/components/ui/button';
   import { fly } from 'svelte/transition';
   import { ArrowDown } from 'lucide-svelte';
+  import { PieChart, Text } from 'layerchart';
 
   // toggleable options
   let toggleableExtrusions = $state({
@@ -30,7 +32,7 @@
   let desiredSimulationCount = $state(100);
 
   // this should be the county code the user selects "more info" in
-  let selectedCounty = $state('');
+  let selectedCounty = $state({ code: '', name: '', state: '' });
 
   const openPopupView = () => {
     dialogOpen = true;
@@ -122,7 +124,11 @@
                 <Button
                   variant="outline"
                   onclick={() => {
-                    selectedCounty = props.coty_gnis_code;
+                    selectedCounty = {
+                      code: props.coty_gnis_code,
+                      state: props.ste_name.substring(2, props.ste_name.length - 2),
+                      name: props.coty_name.substring(2, props.coty_name.length - 2)
+                    };
                     openPopupView();
                   }}>More info</Button
                 >
@@ -207,8 +213,16 @@
 </MapLibre>
 
 {#if dialogOpen}
+  {@const data = rawData[selectedCounty.code][iter]}
+  {@const chartData = [
+    { title: 'Susceptible', amount: data.S, color: '#a35c00' },
+    { title: 'Infectious', amount: data.I, color: '#a30026' },
+    { title: 'Exposed', amount: data.E, color: '#5400a3' },
+    { title: 'Recovered', amount: data.R, color: '#50b53c' }
+  ]}
+
   <div
-    class="fixed bottom-4 left-4 h-[70vh] w-[600px] overflow-y-auto rounded-lg bg-background bg-opacity-60 p-4 shadow-lg backdrop-blur-lg md:w-[800px]"
+    class="fixed bottom-12 left-12 top-12 w-[600px] flex-grow gap-2 overflow-y-auto rounded-lg bg-background bg-opacity-60 p-4 shadow-lg backdrop-blur-lg md:w-[800px]"
     transition:fly={{ y: 200 }}
   >
     <Button
@@ -217,7 +231,33 @@
       variant="outline"
       onclick={() => (dialogOpen = false)}><ArrowDown /></Button
     >
-    <p>{selectedCounty}</p>
+    <p class="my-2 text-xl">
+      Viewing <span class="font-medium">{selectedCounty.name}, {selectedCounty.state}</span>
+    </p>
+    <div class="mt-4 flex">
+      <Card.Root>
+        <Card.Header
+          ><Card.Title>Infectious, susceptible, exposed, recovered</Card.Title></Card.Header
+        >
+        <Card.Content class="h-[400px] w-[400px] ">
+          <PieChart
+            key="title"
+            value="amount"
+            series={chartData.map((d) => {
+              return {
+                key: d.title,
+                data: [d],
+                maxValue: data.I + data.E + data.R + data.S,
+                color: d.color
+              };
+            })}
+            outerRadius={-35}
+            innerRadius={-25}
+            cornerRadius={10}
+          />
+        </Card.Content>
+      </Card.Root>
+    </div>
   </div>
 {/if}
 
