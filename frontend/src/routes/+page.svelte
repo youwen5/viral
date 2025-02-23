@@ -122,7 +122,6 @@
                 <p>Exposed: {Math.round(infection_data.E)}</p>
                 <p>Resistant: {Math.round(infection_data.R)}</p>
                 <Button
-                  variant="outline"
                   onclick={() => {
                     selectedCounty = {
                       code: props.coty_gnis_code,
@@ -130,7 +129,7 @@
                       name: props.coty_name.substring(2, props.coty_name.length - 2)
                     };
                     openPopupView();
-                  }}>More info</Button
+                  }}>Inspect</Button
                 >
               </div>
             {/if}
@@ -232,7 +231,7 @@
       onclick={() => (dialogOpen = false)}><ArrowDown /></Button
     >
     <p class="my-2 text-xl">
-      Viewing <span class="font-medium">{selectedCounty.name}, {selectedCounty.state}</span>
+      Viewing <span class="font-medium">{selectedCounty.name}, {selectedCounty.state}</span>.
     </p>
     <div class="mt-4 flex">
       <Card.Root>
