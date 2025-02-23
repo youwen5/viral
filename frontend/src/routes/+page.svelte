@@ -58,6 +58,9 @@
     A compartmental epidemic modeler to track and predict the H5N1 Avian Flu outbreak using SEIR
     models.
   </p>
+  <p class='mt-4'>
+    Supports SEIR, SIR, and various other compartmental models. Source available on <a class='link' href="https://github.com/youwen5/viral">GitHub</a>.
+  </p>
   <div class="mt-4 space-y-2">
     <Card.Root>
       <Card.Header>
@@ -122,3 +125,9 @@
     </Card.Root>
   </div>
 </div>
+
+<style lang="postcss">
+  .link {
+    @apply underline decoration-violet-400 decoration-2;
+  }
+</style>
