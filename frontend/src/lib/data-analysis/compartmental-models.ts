@@ -166,6 +166,23 @@ function runSEIRModel(
     I += dI * timeStepSize;
     R += dR * timeStepSize;
 
+    if(I <= 0 && (Math.random() < 0.05))
+      {
+        const infected = population * 0.01;
+        if(infected < 1)
+        {
+          I += 1;
+        }
+        else if(infected > 1000)
+        {
+          I += 1000;
+        }
+        else
+        {
+          I += infected;
+        }
+      }
+
     // Add the current state to the results.
     results.push({ time: t * timeStepSize, S, E, I, R });
   }
@@ -287,19 +304,21 @@ export class CompartmentalModels {
       
         //Run Simulation for Each County
         for (const countyFeature of county_geojson.features) {
-          const county_name = String(countyFeature.coty_name_long + ", " + countyFeature.ste_name);  
+          const county_name = countyFeature.properties.coty_name_long + ", " + countyFeature.properties.ste_name;
+          console.log(county_name);
           const row = records.find(r => String(r['Geographic Area']).trim() === county_name);
+          
             const params: SEIRParameters = {
                 beta: t_beta,
                 sigma: t_sigma,
                 gamma: t_gamma,
-                population: row ? row["2023"] : 100000,
+                population: row != undefined ? parseInt(row['2023'].replace(/,/g, ''), 10): 100000,
             };
-        
+            
             const initialConditions = {
-            S0: Math.floor(params.population * 0.5),
+            S0: params.population,
             E0: 0, // Start with no exposed individuals (you could also read this from CSV)
-            I0: Math.random() < 0.5 ? Math.floor(params.population * 0.01) : 0,
+            I0: 0,
             R0: 0,
             };
             //Do Simulation for County
