@@ -3,7 +3,7 @@
   import {
     CompartmentalModels,
     mergeGeoJSONWithExternalData
-  } from '$lib/data-analysis/compartmental-models.ts';
+  } from '$lib/data-analysis/compartmental-models';
   import { onMount } from 'svelte';
   import { Popup, GeoJSON, MapLibre, FillExtrusionLayer } from 'svelte-maplibre';
   import type { FeatureCollection } from 'geojson';
@@ -13,7 +13,7 @@
   import { Slider } from '$lib/components/ui/slider';
   import { Button } from '$lib/components/ui/button';
   import { fly } from 'svelte/transition';
-  import { ArrowDown } from 'lucide-svelte';
+  import { ArrowDown, LoaderCircle } from 'lucide-svelte';
   import { PieChart } from 'layerchart';
 
   onMount(async () => {
@@ -22,18 +22,17 @@
 
   // toggleable options
   let toggleableExtrusions = $state({
-    infectedBirds: true,
-    susceptibleBirds: false,
-    resistantBirds: false,
-    exposedBirds: false,
-    infectedHumans: true,
-    resistantHumans: false,
-    exposedHumans: false,
-    susceptibleHumans: false
+    infectedIndividuals: true,
+    susceptibleIndividuals: false,
+    resistantIndividuals: false,
+    exposedIndividuals: false,
   });
 
   let geojson = $state();
+  let humangeojson = $state();
   let rawData = $state();
+
+  let human_simulation = $state(false);
 
   // the amount of simulations our current loaded dataset has
   let max = $state(100);
@@ -55,9 +54,13 @@
   const generateNewData = async () => {
     generatingNewData = true;
     const seir = await new CompartmentalModels(0.2, 1 / 5, 1 / 10).SEIR(desiredSimulationCount);
+    const human_seir = await new CompartmentalModels(0.2, 1 / 5, 1 / 10).HumanSEIR(0.5, 1/3, 1/10, desiredSimulationCount);
     geojson = await mergeGeoJSONWithExternalData(seir);
+    humangeojson = await mergeGeoJSONWithExternalData(human_seir);
+    console.log("Here done with simulation");
     rawData = seir;
     generatingNewData = false;
+    human_simulation = false;
   };
 
   // right now this is the same as day, but subject to change
@@ -85,6 +88,14 @@
       animationPlaying = false;
     }
   };
+
+  function change_simulation(){
+    let temp = geojson;
+    geojson = humangeojson;
+    humangeojson = temp;
+    human_simulation = !human_simulation;
+  }
+
 </script>
 
 {#if geojson}
@@ -97,7 +108,7 @@
     zoom={4}
   >
     <GeoJSON id="cbsa" data={geojson as unknown as FeatureCollection} promoteId="CBSAFP">
-      {#if toggleableExtrusions.infectedBirds}
+      {#if toggleableExtrusions.infectedIndividuals}
         <FillExtrusionLayer
           paint={{
             'fill-extrusion-base': 0,
@@ -158,7 +169,7 @@
           </Popup>
         </FillExtrusionLayer>
       {/if}
-      {#if toggleableExtrusions.exposedBirds}
+      {#if toggleableExtrusions.exposedIndividuals}
         <FillExtrusionLayer
           paint={{
             'fill-extrusion-base': 0,
@@ -183,7 +194,7 @@
           beforeLayerType="symbol"
         ></FillExtrusionLayer>
       {/if}
-      {#if toggleableExtrusions.susceptibleBirds}
+      {#if toggleableExtrusions.susceptibleIndividuals}
         <FillExtrusionLayer
           paint={{
             'fill-extrusion-base': 0,
@@ -206,7 +217,7 @@
           beforeLayerType="symbol"
         ></FillExtrusionLayer>
       {/if}
-      {#if toggleableExtrusions.resistantBirds}
+      {#if toggleableExtrusions.resistantIndividuals}
         <FillExtrusionLayer
           paint={{
             'fill-extrusion-base': 0,
@@ -356,8 +367,11 @@
           </div>
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="terms" />
-          <Label for="terms">Model human transmission</Label>
+          {#if !human_simulation}
+          <Button onclick={change_simulation}>Model Human Transmission</Button>
+          {:else}
+          <Button onclick={change_simulation}>Model Bird Transmission</Button>
+          {/if}          
         </div>
       </Card.Content>
     </Card.Root>
@@ -367,33 +381,37 @@
       </Card.Header>
       <Card.Content class="space-y-2">
         <div class="flex items-center space-x-2">
-          <Checkbox id="infectedbirds" bind:checked={toggleableExtrusions.infectedBirds} />
-          <Label for="infectedbirds">Show infected birds</Label>
+          <Checkbox id="infectedIndividuals" bind:checked={toggleableExtrusions.infectedIndividuals} />
+          {#if !human_simulation}
+          <Label for="infectedIndividuals">Show infected birds</Label>
+          {:else}
+          <Label for="infectedIndividuals">Show infected Humans</Label>
+          {/if}
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="resistantbirds" bind:checked={toggleableExtrusions.resistantBirds} />
-          <Label for="resistantbirds">Show resistant birds</Label>
+          <Checkbox id="susceptibleIndividuals" bind:checked={toggleableExtrusions.susceptibleIndividuals} />
+          {#if !human_simulation}
+          <Label for="susceptibleIndividuals">Show susceptible birds</Label>
+          {:else}
+          <Label for="susceptibleIndividuals">Show susceptible Humans</Label>
+          {/if}        
+        </div>
+          <div class="flex items-center space-x-2">
+          <Checkbox id="resistantIndividuals" bind:checked={toggleableExtrusions.resistantIndividuals} />
+          {#if !human_simulation}
+          <Label for="resistantIndividuals">Show resistant birds</Label>
+          {:else}
+          <Label for="resistantIndividuals">Show resistant Humans</Label>
+          {/if}        
         </div>
         <div class="flex items-center space-x-2">
-          <Checkbox id="susceptiblebird" bind:checked={toggleableExtrusions.susceptibleBirds} />
-          <Label for="susceptiblebird">Show susceptible birds</Label>
-        </div>
-        <div class="flex items-center space-x-2">
-          <Checkbox id="exposedbird" bind:checked={toggleableExtrusions.exposedBirds} />
-          <Label for="exposedbird">Show exposed birds</Label>
-        </div>
-        <div class="flex items-center space-x-2">
-          <Checkbox id="infectedhuman" bind:checked={toggleableExtrusions.infectedHumans} />
-          <Label for="infectedhuman">Show infected humans</Label>
-        </div>
-        <div class="flex items-center space-x-2">
-          <Checkbox id="resistanthuman" bind:checked={toggleableExtrusions.resistantHumans} />
-          <Label for="resistanthuman">Show resistant humans</Label>
-        </div>
-        <div class="flex items-center space-x-2">
-          <Checkbox id="susceptiblehuman" bind:checked={toggleableExtrusions.susceptibleHumans} />
-          <Label for="susceptiblehuman">Show susceptible humans</Label>
-        </div>
+          <Checkbox id="exposedIndividuals" bind:checked={toggleableExtrusions.exposedIndividuals} />
+          {#if !human_simulation}
+          <Label for="exposedIndividuals">Show exposed birds</Label>
+          {:else}
+          <Label for="exposedIndividuals">Show exposed Humans</Label>
+          {/if}  
+          </div>
       </Card.Content>
     </Card.Root>
     <Card.Root>
