@@ -8,6 +8,8 @@
   import { Label } from '$lib/components/ui/label';
   import { Slider } from '$lib/components/ui/slider';
   import { Button } from '$lib/components/ui/button';
+  import { fly } from 'svelte/transition';
+  import { ArrowDown } from 'lucide-svelte';
 
   // toggleable options
   let toggleableExtrusions = $state({
@@ -26,6 +28,15 @@
 
   // the amount of simulations the user WANTS to run
   let desiredSimulationCount = $state(100);
+
+  // this should be the county code the user selects "more info" in
+  let selectedCounty = $state('');
+
+  const openPopupView = () => {
+    dialogOpen = true;
+  };
+
+  let dialogOpen = $state(false);
 
   // right now this is the same as day, but subject to change
   let iter = $state(0);
@@ -87,7 +98,7 @@
         }}
         beforeLayerType="symbol"
       >
-        <Popup openOn="hover">
+        <Popup openOn="click" closeOnClickInside={true}>
           {#snippet children({ data })}
             {@const props = data?.properties}
             {#if props && props.simulatedData}
@@ -108,6 +119,13 @@
                 <p>Susceptible: {Math.round(infection_data.S)}</p>
                 <p>Exposed: {Math.round(infection_data.E)}</p>
                 <p>Resistant: {Math.round(infection_data.R)}</p>
+                <Button
+                  variant="outline"
+                  onclick={() => {
+                    selectedCounty = props.coty_gnis_code;
+                    openPopupView();
+                  }}>More info</Button
+                >
               </div>
             {/if}
           {/snippet}
@@ -187,6 +205,21 @@
     {/if}
   </GeoJSON>
 </MapLibre>
+
+{#if dialogOpen}
+  <div
+    class="fixed bottom-4 left-4 h-[70vh] w-[600px] overflow-y-auto rounded-lg bg-background bg-opacity-60 p-4 shadow-lg backdrop-blur-lg md:w-[800px]"
+    transition:fly={{ y: 200 }}
+  >
+    <Button
+      class="absolute right-2 top-2"
+      size="icon"
+      variant="outline"
+      onclick={() => (dialogOpen = false)}><ArrowDown /></Button
+    >
+    <p>{selectedCounty}</p>
+  </div>
+{/if}
 
 <div
   class="fixed bottom-2 right-2 top-2 w-96 overflow-y-auto rounded-lg bg-background bg-opacity-60 p-4 shadow-lg backdrop-blur-lg"
