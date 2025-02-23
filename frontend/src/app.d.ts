@@ -8,6 +8,7 @@ declare global {
     // interface PageState {}
     // interface Platform {}
   }
-}
 
+  declare module 'us-state-codes';
+}
 export {};
