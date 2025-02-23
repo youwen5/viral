@@ -260,4 +260,74 @@ export class CompartmentalModels {
     }
   };
 
+  public HumanSEIR = async (t_beta: number, t_sigma: number, t_gamma: number, timeSteps: number): Promise<CountyData> => {
+    const timeStepSize = 1; // Size of each time step (e.g., 1 day)
+
+    try {
+        const geojsonDataRaw = await fetch("/counties_raw.geojson");
+        let county_geojson
+        try {
+          county_geojson = await geojsonDataRaw.json();
+          } catch (error) {
+            console.log("error parsing " + error);
+          }
+        const allCountyData: CountyData = {};
+        console.log(county_geojson);
+
+        const response = await fetch('/county_pop.csv');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch CSV file: ${response.status} ${response.statusText}`);
+        }
+        const csvText = await response.text();
+        const records = parse(csvText, {
+            columns: true,
+            skip_empty_lines: true,
+            trim: true
+          }) as any[];
+      
+        //Run Simulation for Each County
+        for (const countyFeature of county_geojson.features) {
+          const county_name = String(countyFeature.coty_name_long + ", " + countyFeature.ste_name);  
+          const row = records.find(r => String(r['Geographic Area']).trim() === county_name);
+            const params: SEIRParameters = {
+                beta: t_beta,
+                sigma: t_sigma,
+                gamma: t_gamma,
+                population: row ? row["2023"] : 100000,
+            };
+        
+            const initialConditions = {
+            S0: Math.floor(params.population * 0.5),
+            E0: 0, // Start with no exposed individuals (you could also read this from CSV)
+            I0: Math.random() < 0.5 ? Math.floor(params.population * 0.01) : 0,
+            R0: 0,
+            };
+            //Do Simulation for County
+            const simulationResults = runSEIRModel(
+                params,
+                initialConditions,
+                timeSteps,
+                timeStepSize,
+            );
+            // Write results to a json file
+            const gnis = countyFeature.properties.coty_gnis_code;
+            try {
+            allCountyData[gnis] = simulationResults;
+            console.log("Done With One");
+            } catch (error) {
+            console.log(
+                `Couldn't find a county code for ${gnis} code for county`,
+            );
+            }
+        }
+        //Turns the Simulation reasults in JSON
+        return allCountyData;
+
+        // Output the results (e.g., print to console, write to a new CSV, plot with a library)
+        } catch (error) {
+        // @ts-expect-error
+        console.error("Error:", error.message);
+        throw new Error("We broke something.");
+        }
+    };
 }
