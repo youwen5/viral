@@ -14,9 +14,9 @@
   import { PieChart } from 'layerchart';
 
   onMount(async () => {
-    const model = new CompartmentalModels(0.2, 1 / 5, 1 / 10);
-    //console.log(await model.SEIR())
-    geojson = await mergeGeoJSONWithExternalData(await model.SEIR())
+    const seir = await (new CompartmentalModels(0.2, 1 / 5, 1 / 10)).SEIR();
+    geojson = await mergeGeoJSONWithExternalData(seir)
+    rawData = seir
   })
 
   // toggleable options
@@ -32,6 +32,7 @@
   });
 
   let geojson = $state()
+  let rawData = $state()
 
   // the amount of simulations our current loaded dataset has
   let max = $state(100);
@@ -219,6 +220,8 @@
     {/if}
   </GeoJSON>
 </MapLibre>
+{:else}
+<p>Loading</p>
 {/if}
 
 {#if dialogOpen}
