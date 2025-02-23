@@ -140,7 +140,7 @@ function runSEIRModel(
   params: SEIRParameters,
   initialConditions: { S0: number; E0: number; I0: number; R0: number },
   timeSteps: number,
-  timeStepSize: number
+  timeStepSize: number,
 ): SEIRDataPoint[] {
   const { beta, sigma, gamma, population } = params;
   const { S0, E0, I0, R0 } = initialConditions;
@@ -211,8 +211,7 @@ export class CompartmentalModels {
     this.gamma = gamma;
   }
 
-  public SEIR = async (): Promise<CountyData> => {
-    const timeSteps = 100; // Number of time steps to simulate
+  public SEIR = async (iterations: number): Promise<CountyData> => {
     const timeStepSize = 1; // Size of each time step (e.g., 1 day)
 
     try {
@@ -235,7 +234,7 @@ export class CompartmentalModels {
           R0: 0
         };
         //Do Simulation for County
-        const simulationResults = runSEIRModel(params, initialConditions, timeSteps, timeStepSize);
+        const simulationResults = runSEIRModel(params, initialConditions, iterations, timeStepSize);
         // Write results to a json file
 
         try {

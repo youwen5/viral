@@ -50,10 +50,14 @@
 
   let dialogOpen = $state(false);
 
+  let generatingNewData = $state(false);
+
   const generateNewData = async () => {
-    const seir = await new CompartmentalModels(0.2, 1 / 5, 1 / 10).SEIR();
+    generatingNewData = true;
+    const seir = await new CompartmentalModels(0.2, 1 / 5, 1 / 10).SEIR(desiredSimulationCount);
     geojson = await mergeGeoJSONWithExternalData(seir);
     rawData = seir;
+    generatingNewData = false;
   };
 
   // right now this is the same as day, but subject to change
@@ -323,6 +327,14 @@
         <Button onclick={increment_next} variant={!animationPlaying ? 'default' : 'secondary'}
           >{iter >= max - 1 ? 'Replay' : !animationPlaying ? 'Play' : 'Pause'}</Button
         >
+        {#if !generatingNewData}
+          <Button onclick={generateNewData} variant="outline">Generate</Button>
+        {:else}
+          <Button disabled>
+            <LoaderCircle class="animate-spin" />
+            Please wait
+          </Button>
+        {/if}
         <div class="flex items-center gap-2">
           <p>
             Simulation speed (days per second):
