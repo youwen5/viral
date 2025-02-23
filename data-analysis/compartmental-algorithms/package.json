@@ -10,6 +10,7 @@
     "typescript": "^5"
   },
   "dependencies": {
-    "csv-parser": "^3.2.0"
+    "csv-parser": "^3.2.0",
+    "us-state-codes": "^1.1.2"
   }
 }
