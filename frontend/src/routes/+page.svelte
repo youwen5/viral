@@ -1,12 +1,21 @@
 <script lang="ts">
   import cbsa from '$lib/data/cbsa.json';
-  import simulatedData from '$lib/data/out_geo.json';
+  import generatedData from '$lib/data/out_geo.json';
   import { Popup, GeoJSON, MapLibre, FillExtrusionLayer } from 'svelte-maplibre';
   import type { FeatureCollection } from 'geojson';
   import * as Card from '$lib/components/ui/card';
   import { Checkbox } from '$lib/components/ui/checkbox';
   import { Label } from '$lib/components/ui/label';
   import { Slider } from '$lib/components/ui/slider';
+    import {Button} from '$lib/components/ui/button';
+
+  let iter = $state(0)
+
+  const increment_next = () => {
+  if (iter < 100) {
+  iter++;
+  }
+  }
 </script>
 
 <MapLibre
@@ -17,7 +26,7 @@
   center={[-98.137, 40.137]}
   zoom={4}
 >
-  <GeoJSON id="cbsa" data={simulatedData as unknown as FeatureCollection} promoteId="CBSAFP">
+  <GeoJSON id="cbsa" data={generatedData as unknown as FeatureCollection} promoteId="CBSAFP">
     <FillExtrusionLayer
       paint={{
         'fill-extrusion-base': 0,
@@ -26,14 +35,14 @@
           ['linear'],
           // Population density
           //['/', ['get', 'POPESTIMATE2020'], ['/', ['get', 'ALAND'], 1000000]],
-          ['/', ['get', 'S', ['at',0,['get', 'simulatedData']]], 10000],
+          ['/', ['get', 'S', ['at',iter,['get', 'simulatedData']]], 10000],
           0,
           '#0a0',
           200,
           '#a00'
         ],
         'fill-extrusion-opacity': 0.6,
-        'fill-extrusion-height': ['/', ['get', 'I', ['at',0, ['get', 'simulatedData']]], 50]
+        'fill-extrusion-height': ['*', ['sqrt', ['get', 'I', ['at',iter, ['get', 'simulatedData']]]], 1000]
       }}
       beforeLayerType="symbol"
     >
@@ -41,7 +50,7 @@
         {#snippet children({ data })}
           {@const props = data?.properties}
           {#if props && props.simulatedData}
-            {@const infection_data = JSON.parse(props.simulatedData)[0]}
+            {@const infection_data = JSON.parse(props.simulatedData)[iter]}
             <div class={`flex flex-col gap-2`}>
               <div class="text-lg font-bold">{props.coty_name.substring(2,props.coty_name.length - 2)}, {props.ste_name.substring(2,props.ste_name.length - 2)}</div>
               <p>Population: {Math.round(infection_data.S + infection_data.I + infection_data.E + infection_data.R)}</p>
@@ -77,6 +86,7 @@
         <Card.Title>Simulation options</Card.Title>
       </Card.Header>
       <Card.Content class="space-y-2">
+      <Button onclick={increment_next}>Next</Button>
         <div class="flex items-center space-x-2">
           <Checkbox id="terms" />
           <Label for="terms">Model human transmission</Label>
