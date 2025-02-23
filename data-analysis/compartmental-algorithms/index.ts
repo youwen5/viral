@@ -147,10 +147,10 @@ function runSEIRModel(
 
   for (let t = 1; t <= timeSteps; t++) {
     // Calculate the *changes* in each compartment using the SEIR equations.
-    const dS = (-beta * S * I) / population;
-    const dE = (beta * S * I) / population - sigma * E;
-    const dI = sigma * E - gamma * I;
-    const dR = gamma * I;
+    const dS = (-beta * I) * S / population;
+    const dE = (beta * I ) * S / population - sigma * (E );
+    const dI = sigma * (E ) - gamma * (I );
+    const dR = gamma * (I );
 
     // Update the compartments using Euler's method (simple and good for demonstration)
     S += dS * timeStepSize;
@@ -193,23 +193,15 @@ class CompartmentModels {
   private beta: number;
   private sigma: number;
   private gamma: number;
-  private population: number;
 
-  constructor(beta: number, sigma: number, gamma: number, pop: number) {
+  constructor(beta: number, sigma: number, gamma: number) {
     this.beta = beta;
     this.sigma = sigma;
     this.gamma = gamma;
-    this.population = pop;
   }
 
   public SEIR = async (): Promise<CountyData> => {
     const csvFilePath = path.join(__dirname, "commercial-backyard-flocks.csv"); // Path to your CSV
-    const params: SEIRParameters = {
-      beta: this.beta,
-      sigma: this.sigma,
-      gamma: this.gamma,
-      population: this.population,
-    };
     const timeSteps = 100; // Number of time steps to simulate
     const timeStepSize = 1; // Size of each time step (e.g., 1 day)
 
@@ -219,10 +211,17 @@ class CompartmentModels {
       const allCountyData: CountyData = {};
       //Run Simulation for Each County
       for (let i = 0; i < countyData.length; i++) {
+        const params: SEIRParameters = {
+            beta: this.beta,
+            sigma: this.sigma,
+            gamma: this.gamma,
+            population: countyData[i].infected,
+          };
+      
         const initialConditions = {
-          S0: params.population - countyData[i].infected,
+          S0: params.population - (countyData[i].infected * 0.1),
           E0: 0, // Start with no exposed individuals (you could also read this from CSV)
-          I0: countyData[i].infected,
+          I0: countyData[i].infected * 0.1,
           R0: 0,
         };
         //Do Simulation for County
@@ -263,7 +262,7 @@ class CompartmentModels {
 // fs.writeFileSync(path.join(__dirname, "seir_results.json"), jsonOutput);
 // console.log("Results written to seir_results.csv");
 
-const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10, 1000000);
+const myModel = new CompartmentModels(0.2, 1 / 5, 1 / 10);
 const out = await myModel.SEIR();
 mergeGeoJSONWithExternalData(out, "out.geojson");
 
