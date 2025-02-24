@@ -399,7 +399,7 @@
   {@const avianData = rawData.avian[selectedCounty.code][iter]}
   {@const humanData = rawData.human[selectedCounty.code][iter]}
   -->
-  {@const chartData = [
+  {@const avianChartData = [
     { title: 'Susceptible', amount: rawData.avian[selectedCounty.code][iter].S, color: '#a35c00' },
     { title: 'Infectious', amount: rawData.avian[selectedCounty.code][iter].I, color: '#a30026' },
     { title: 'Exposed', amount: rawData.avian[selectedCounty.code][iter].E, color: '#5400a3' },
@@ -428,11 +428,15 @@
           <PieChart
             key="title"
             value="amount"
-            series={chartData.map((d) => {
+            series={avianChartData.map((d) => {
               return {
                 key: d.title,
                 data: [d],
-                maxValue: rawData.avian[selectedCounty.code][iter].I + rawData.avian[selectedCounty.code][iter].E + rawData.avian[selectedCounty.code][iter].R + rawData.avian[selectedCounty.code][iter].S,
+                maxValue:
+                  rawData.avian[selectedCounty.code][iter].I +
+                  rawData.avian[selectedCounty.code][iter].E +
+                  rawData.avian[selectedCounty.code][iter].R +
+                  rawData.avian[selectedCounty.code][iter].S,
                 color: d.color
               };
             })}
@@ -440,6 +444,51 @@
             innerRadius={-25}
             cornerRadius={10}
           />
+          <!--
+          {#if rawData.human}
+            {@const humanChartData = [
+              {
+                title: 'Susceptible',
+                amount: rawData.human[selectedCounty.code][iter].S,
+                color: '#a35c00'
+              },
+              {
+                title: 'Infectious',
+                amount: rawData.human[selectedCounty.code][iter].I,
+                color: '#a30026'
+              },
+              {
+                title: 'Exposed',
+                amount: rawData.human[selectedCounty.code][iter].E,
+                color: '#5400a3'
+              },
+              {
+                title: 'Recovered',
+                amount: rawData.human[selectedCounty.code][iter].R,
+                color: '#50b53c'
+              }
+            ]}
+            <PieChart
+              key="title"
+              value="amount"
+              series={humanChartData.map((d) => {
+                return {
+                  key: d.title,
+                  data: [d],
+                  maxValue:
+                    rawData.human[selectedCounty.code][iter].I +
+                    rawData.human[selectedCounty.code][iter].E +
+                    rawData.human[selectedCounty.code][iter].R +
+                    rawData.human[selectedCounty.code][iter].S,
+                  color: d.color
+                };
+              })}
+              outerRadius={-35}
+              innerRadius={-25}
+              cornerRadius={10}
+            />
+          {/if}
+          -->
         </Card.Content>
       </Card.Root>
     </div>
