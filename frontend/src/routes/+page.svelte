@@ -53,19 +53,29 @@
 
   let generatingNewData = $state(false);
 
+  let parameters = $state({
+    avianSigma: 1/5,
+    avianBeta: 0.2,
+    avianGamma: 1/10,
+    humanSigma: 1/5,
+    humanBeta: 0.2,
+    humanGamma: 1/10,
+  });
+
   const generateNewData = async () => {
     generatingNewData = true;
     let seir = {};
     let humanseir = {};
-    seir = await new CompartmentalModels(0.2, 1 / 5, 1 / 10).SEIR(desiredSimulationCount);
+    seir = await new CompartmentalModels(parameters.avianBeta, parameters.avianSigma, parameters.avianGamma).SEIR(desiredSimulationCount);
     if (toggleableExtrusions.human_simulation) {
-      humanseir = await new CompartmentalModels(0.2, 1 / 5, 1 / 10).HumanSEIR(
+      humanseir = await new CompartmentalModels(parameters.humanBeta, parameters.humanSigma, parameters.humanGamma).HumanSEIR(
         0.5,
         1 / 3,
         1 / 10,
         desiredSimulationCount
       );
     }
+    max = desiredSimulationCount;
     geojson = await mergeGeoJSONWithExternalData(seir, humanseir);
     rawData = { human: humanseir, avian: seir };
     generatingNewData = false;
@@ -533,7 +543,7 @@
       <Card.Content class="space-y-4">
         <div class="space-y-2">
           <p class="font-medium">Days passed: {iter}</p>
-          <Slider type="single" bind:value={iter} max={100} step={1} class="ml-2 max-w-[70%]" />
+          <Slider type="single" bind:value={iter} {max} step={1} class="ml-2 max-w-[70%]" />
         </div>
         <Button onclick={increment_next} variant={!animationPlaying ? 'default' : 'secondary'}
           >{iter >= max - 1 ? 'Replay' : !animationPlaying ? 'Play' : 'Pause'}</Button
@@ -619,16 +629,28 @@
       </Card.Header>
       <Card.Content class="space-y-2">
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Transmission rate</p>
-          <Slider type="single" max={100} step={1} class="max-w-[70%]" />
+          <p class="font-medium">Beta (avian): {parameters.avianBeta}</p>
+          <Slider bind:value={parameters.avianBeta} type="single" max={1} step={0.05} class="max-w-[70%]" />
         </div>
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Various rates</p>
-          <Slider type="single" max={100} step={1} class="max-w-[70%]" />
+          <p class="font-medium">Sigma (avian): {parameters.avianSigma}</p>
+          <Slider bind:value={parameters.avianSigma} type="single" max={1} step={0.05} class="max-w-[70%]" />
         </div>
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Some parameter</p>
-          <Slider type="single" max={100} step={1} class="max-w-[70%]" />
+          <p class="font-medium">Gamma (avian): {parameters.avianGamma}</p>
+          <Slider bind:value={parameters.avianGamma} type="single" max={1} step={0.05} class="max-w-[70%]" />
+        </div>
+        <div class="space-y-2 rounded-sm border border-muted p-4">
+          <p class="font-medium">Beta (human): {parameters.humanBeta}</p>
+          <Slider bind:value={parameters.humanBeta} type="single" max={1} step={0.05} class="max-w-[70%]" />
+        </div>
+        <div class="space-y-2 rounded-sm border border-muted p-4">
+          <p class="font-medium">Sigma (human): {parameters.humanSigma}</p>
+          <Slider bind:value={parameters.humanSigma} type="single" max={1} step={0.05} class="max-w-[70%]" />
+        </div>
+        <div class="space-y-2 rounded-sm border border-muted p-4">
+          <p class="font-medium">Gamma (human): {parameters.humanGamma}</p>
+          <Slider bind:value={parameters.humanGamma} type="single" max={1} step={0.05} class="max-w-[70%]" />
         </div>
       </Card.Content>
     </Card.Root>
