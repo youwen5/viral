@@ -617,7 +617,7 @@
       </Card.Header>
       <Card.Content class="space-y-2">
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Beta (avian): {parameters.avianBeta}</p>
+          <p class="font-medium">Transmission rate (avian): {parameters.avianBeta}</p>
           <Slider
             bind:value={parameters.avianBeta}
             type="single"
@@ -627,7 +627,7 @@
           />
         </div>
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Sigma (avian): {parameters.avianSigma}</p>
+          <p class="font-medium">Incubation (avian): {parameters.avianSigma}</p>
           <Slider
             bind:value={parameters.avianSigma}
             type="single"
@@ -637,7 +637,7 @@
           />
         </div>
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Gamma (avian): {parameters.avianGamma}</p>
+          <p class="font-medium">Recovery rate (avian): {parameters.avianGamma}</p>
           <Slider
             bind:value={parameters.avianGamma}
             type="single"
@@ -647,7 +647,7 @@
           />
         </div>
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Beta (human): {parameters.humanBeta}</p>
+          <p class="font-medium">Recovery rate (human): {parameters.humanBeta}</p>
           <Slider
             bind:value={parameters.humanBeta}
             type="single"
@@ -657,7 +657,7 @@
           />
         </div>
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Sigma (human): {parameters.humanSigma}</p>
+          <p class="font-medium">Incubation (human): {parameters.humanSigma}</p>
           <Slider
             bind:value={parameters.humanSigma}
             type="single"
@@ -667,7 +667,7 @@
           />
         </div>
         <div class="space-y-2 rounded-sm border border-muted p-4">
-          <p class="font-medium">Gamma (human): {parameters.humanGamma}</p>
+          <p class="font-medium">Recovery rate (human): {parameters.humanGamma}</p>
           <Slider
             bind:value={parameters.humanGamma}
             type="single"
