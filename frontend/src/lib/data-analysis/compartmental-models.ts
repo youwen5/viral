@@ -190,7 +190,7 @@ function runSEIRModel(
   return results;
 }
 
-export async function mergeGeoJSONWithExternalData(countyData: CountyData): Promise<any> {
+export async function mergeGeoJSONWithExternalData(avianData: CountyData, humanData: CountyData): Promise<any> {
   try {
     // Fetch the GeoJSON data from the specified URL.
     const response = await fetch('/counties_raw.geojson');
@@ -202,10 +202,14 @@ export async function mergeGeoJSONWithExternalData(countyData: CountyData): Prom
     // Merge external county data into each feature's properties.
     countyGeoJSON.features.forEach((countyFeature: any) => {
       const gnis = countyFeature.properties.coty_gnis_code;
-      const simulatedData = countyData[gnis];
+      const avianSimulatedData = avianData[gnis];
+      const humanSimultedData = humanData[gnis];
       countyFeature.properties = {
         ...countyFeature.properties,
-        simulatedData
+        simulatedData:  {
+          human: humanSimultedData,
+          avian: avianSimulatedData
+        }
       };
     });
 
@@ -289,7 +293,6 @@ export class CompartmentalModels {
             console.log("error parsing " + error);
           }
         const allCountyData: CountyData = {};
-        console.log(county_geojson);
 
         const response = await fetch('/county_pop.csv');
         if (!response.ok) {
@@ -305,7 +308,6 @@ export class CompartmentalModels {
         //Run Simulation for Each County
         for (const countyFeature of county_geojson.features) {
           const county_name = countyFeature.properties.coty_name_long + ", " + countyFeature.properties.ste_name;
-          console.log(county_name);
           const row = records.find(r => String(r['Geographic Area']).trim() === county_name);
           
             const params: SEIRParameters = {
@@ -332,7 +334,6 @@ export class CompartmentalModels {
             const gnis = countyFeature.properties.coty_gnis_code;
             try {
             allCountyData[gnis] = simulationResults;
-            console.log("Done With One");
             } catch (error) {
             console.log(
                 `Couldn't find a county code for ${gnis} code for county`,
