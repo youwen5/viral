@@ -3,6 +3,8 @@
 An interactive 3D epidemic modeler to track and predict the H5N1 Avian
 Influenza outbreak using compartmental models and generative agents.
 
+![image](https://github.com/user-attachments/assets/7aa0baba-c8f6-4cd5-a014-f7cbed162c5c)
+
 For our primary projections, we use the SEIR compartmental model, a suitable
 mathematical model of infectious disease spread which groups populations into
 compartments of "susceptible," "exposed," "infected," or "recovered."
